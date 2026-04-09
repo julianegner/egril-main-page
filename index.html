@@ -86,10 +86,32 @@
             font-size: 0.9em;
         }
         
+        .coming-soon-label {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .game-banner {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
         footer {
             margin-top: 60px;
-            color: #999;
+            color: #555;
             font-size: 0.9em;
+            text-align: left;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        footer h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
         }
     </style>
 </head>
@@ -102,14 +124,19 @@
             <h2>Games</h2>
             <div class="game-list">
                 <div class="game-item">
-                    <h3>Coming Soon</h3>
-                    <p>Games will be listed here</p>
+                    <p class="coming-soon-label">Coming Soon</p>
+                    <img src="defenderofegril.png" alt="Defender of Egril game promotional banner" class="game-banner">
                 </div>
             </div>
         </div>
         
         <footer>
-            <p>&copy; 2026 egril.de - All rights reserved</p>
+            <h3>Impressum</h3>
+            <p>Julian Egner<br>
+            Weissstrasse 18<br>
+            53123 Bonn<br>
+            Germany<br>
+            Mail: <a href="mailto:admin@egril.de">admin@egril.de</a></p>
         </footer>
     </div>
 </body>
