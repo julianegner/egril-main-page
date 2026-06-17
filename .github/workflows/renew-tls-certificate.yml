@@ -1,0 +1,54 @@
+# Renew TLS certificate for https://egril.de.
+#
+# This workflow runs automatically on the 1st of every month and can also be
+# triggered manually. It SSHes into the production host, stops nginx briefly so
+# certbot can bind to port 80 (standalone challenge), renews due certificates,
+# and starts nginx again.
+#
+# Required GitHub Secrets:
+#   EGRIL_PROD_SSH_HOST           – SSH host for the egril.de server
+#   EGRIL_PROD_SSH_USER           – SSH user on the host (typically root)
+#   EGRIL_PROD_SSH_PRIVATE_KEY    – SSH private key for that user
+#   EGRIL_PROD_SSH_KEY_PASSPHRASE – Passphrase for the private key (optional)
+
+name: Renew TLS Certificate (egril.de)
+
+on:
+  schedule:
+    - cron: '0 3 1 * *' # First day of every month at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  renew-egril-certificate:
+    name: Renew egril.de certificate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: "🔒 Renew TLS certificate on egril.de server"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EGRIL_PROD_SSH_HOST }}
+          username: ${{ secrets.EGRIL_PROD_SSH_USER }}
+          key: ${{ secrets.EGRIL_PROD_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.EGRIL_PROD_SSH_KEY_PASSPHRASE }}
+          script: |
+            set -euo pipefail
+            DOMAIN="egril.de"
+
+            echo "=== Current certificate status for ${DOMAIN} ==="
+            certbot certificates --domain "${DOMAIN}" 2>/dev/null || echo "(certbot query failed)"
+
+            # Stop nginx so certbot standalone can bind to port 80.
+            # The trap ensures nginx is started again whether certbot succeeds or fails.
+            systemctl stop nginx
+            trap 'systemctl start nginx' EXIT
+
+            # Renew certificates that are near expiry (or already expired).
+            certbot renew --standalone --non-interactive
+
+            echo ""
+            echo "=== Updated certificate status for ${DOMAIN} ==="
+            certbot certificates --domain "${DOMAIN}" 2>/dev/null || echo "(certbot query failed)"
+            echo "✅ Certificate check/renewal complete for ${DOMAIN}"
