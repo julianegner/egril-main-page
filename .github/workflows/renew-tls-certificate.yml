@@ -9,6 +9,9 @@
 #   EGRIL_PROD_SSH_USER           – SSH user on the host (typically root)
 #   EGRIL_PROD_SSH_PRIVATE_KEY    – SSH private key for that user
 #   EGRIL_PROD_SSH_KEY_PASSPHRASE – Passphrase for the private key (optional)
+#
+# Alternatively, EGRIL_PROD_SSH_HOST and EGRIL_PROD_SSH_USER can be configured
+# as repository/environment Variables.
 
 name: Renew TLS Certificate (egril.de)
 
@@ -25,11 +28,39 @@ jobs:
       contents: read
 
     steps:
+      - name: Validate SSH workflow configuration
+        env:
+          SSH_HOST: ${{ secrets.EGRIL_PROD_SSH_HOST || vars.EGRIL_PROD_SSH_HOST }}
+          SSH_USER: ${{ secrets.EGRIL_PROD_SSH_USER || vars.EGRIL_PROD_SSH_USER }}
+          SSH_KEY: ${{ secrets.EGRIL_PROD_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+
+          if [ -z "${SSH_HOST}" ]; then
+            echo "::error::Missing SSH host. Configure EGRIL_PROD_SSH_HOST as a secret or variable."
+            missing=1
+          fi
+
+          if [ -z "${SSH_USER}" ]; then
+            echo "::error::Missing SSH username. Configure EGRIL_PROD_SSH_USER as a secret or variable."
+            missing=1
+          fi
+
+          if [ -z "${SSH_KEY}" ]; then
+            echo "::error::Missing SSH private key. Configure EGRIL_PROD_SSH_PRIVATE_KEY as a secret."
+            missing=1
+          fi
+
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: "🔒 Renew TLS certificate on egril.de server"
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
-          host: ${{ secrets.EGRIL_PROD_SSH_HOST }}
-          username: ${{ secrets.EGRIL_PROD_SSH_USER }}
+          host: ${{ secrets.EGRIL_PROD_SSH_HOST || vars.EGRIL_PROD_SSH_HOST }}
+          username: ${{ secrets.EGRIL_PROD_SSH_USER || vars.EGRIL_PROD_SSH_USER }}
           key: ${{ secrets.EGRIL_PROD_SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.EGRIL_PROD_SSH_KEY_PASSPHRASE }}
           script: |
