@@ -43,7 +43,7 @@ jobs:
             # Nginx is only stopped/started when a renewal attempt is needed.
             certbot renew --standalone --non-interactive \
               --pre-hook "systemctl stop nginx" \
-              --post-hook "systemctl start nginx"
+              --post-hook "systemctl restart nginx"
 
             echo ""
             echo "=== Updated certificate status for ${DOMAIN} ==="
